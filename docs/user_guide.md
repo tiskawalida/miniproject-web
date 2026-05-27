@@ -102,11 +102,11 @@ SmartStock Pro dapat diakses berdasarkan level peran pengguna (Admin, Manajer Gu
 * **Masalah 4: Nilai CPU dan RAM server terus menunjukkan angka 0%.**
   * *Solusi:* Server web membutuhkan beberapa detik untuk melakukan sampel beban kerja CPU pertama kali. Jika terus berlanjut, pastikan proses Node.js memiliki hak akses membaca metrik sistem OS server.
 * **Masalah 5: Database connection error**
-* *Solusi:* Cek konfigurasi .env
+  * *Solusi:* Cek konfigurasi .env
 * **Masalah 6: Upload gambar gagal**
-* *Solusi:* Cek folder public/uploads permission
+  * *Solusi:* Cek folder public/uploads permission
 * **Masalah 7: Email notifikasi tidak terkirim**
-* *Solusi:* cek SMTP setting
+  * *Solusi:* cek SMTP setting
 ---
 
 ## 5. Screenshot Web
