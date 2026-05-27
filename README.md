@@ -1,47 +1,33 @@
 # SmartStock Pro
 
-SmartStock Pro — A minimal inventory management system built for the BNSP assignment.
+SmartStock Pro — Sistem manajemen inventaris sederhana yang dibuat untuk tugas BNSP.
 
-Features included in this workspace:
-- Session-based authentication with hashed passwords
-- CSRF protection and secure session handling
-- Dashboard UI (vanilla JS) with real-time SSE hooks
-- Background job queue and PDF export endpoints
+Fitur yang tersedia pada workspace ini:
+- Autentikasi berbasis session dengan password yang di-hash
+- Proteksi CSRF dan pengelolaan session yang aman
+- Tampilan dashboard (vanilla JavaScript) dengan dukungan real-time SSE
+- Background job queue dan endpoint export PDF
 
-Quick start
+Cara Menjalankan
 
 1. Install dependencies:
 
-```bash
 npm install
-```
 
-2. Start the app:
+2. Jalankan aplikasi:
 
-```bash
 npm run dev
-```
 
-3. Open http://localhost:3000 and login with demo credentials:
+3. Buka http://localhost:3000 lalu login menggunakan akun demo berikut:
 
-- Admin: `admin` / `Admin@123`
-- Manager: `manager1` / `Manager@123`
+- Username: admin / Password: Admin@123
+- Username: manager1 / Password: Manager@123
+- Username: staff1 / Password: Staff@123
+- Username: viewer1 / Password: Viewer@123
 
-Repository contents
+Isi Repository
 
-- `index.js` - Express app entry
-- `public/` - Frontend static assets
-- `routes/` - Express API routes
-- `database/` - DB init and helper
-
-Notes
-
-This repository was prepared for the BNSP assignment and includes a small commit history created locally. To publish to GitHub, create a new remote repo and push following the instructions below.
-
-GitHub push (example):
-
-```bash
-git remote add origin https://github.com/<your-username>/<repo-name>.git
-git branch -M main
-git push -u origin main
-```
+- index.js - File utama aplikasi Express
+- public/ - Asset frontend statis
+- routes/ - Route API Express
+- database/ - Inisialisasi database dan helper
