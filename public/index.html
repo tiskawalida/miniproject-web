@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStock Pro - Sistem Manajemen Inventaris Real-Time</title>
+  <!-- Tailwind is NOT used, standard custom Vanilla CSS for absolute controls -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+<body>
+
+  <!-- ==========================================
+       1. LOGIN OVERLAY SCREEN
+       ========================================== -->
+  <div id="login-screen" style="opacity: 1; pointer-events: auto;">
+    <div class="login-card">
+      <div class="brand-icon" style="margin: 0 auto 15px auto; width: 60px; height: 60px; font-size: 1.8rem;">S</div>
+      <h1 class="login-logo">SmartStock Pro</h1>
+      <p class="login-subtitle">Sistem Manajemen Inventaris PT Maju Bersama Digital</p>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-username">Username</label>
+          <input type="text" id="login-username" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          <i data-lucide="log-in"></i> Masuk Sistem
+        </button>
+      </form>
+
+      <div style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 20px;">
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Gunakan akun demo untuk pengujian cepat:</p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+          <span class="demo-account-pill" onclick="fillDemoLogin('admin', 'Admin@123')">Admin</span>
+          <span class="demo-account-pill" onclick="fillDemoLogin('manager1', 'Manager@123')">Manager Jkt</span>
+          <span class="demo-account-pill" onclick="fillDemoLogin('staff1', 'Staff@123')">Staff Jkt</span>
+          <span class="demo-account-pill" onclick="fillDemoLogin('viewer1', 'Viewer@123')">Viewer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ==========================================
+      2. APP CONTENT WRAPPER
+      ========================================== -->
+    <div id="app-content" style="display: none;">
+      <!-- Topbar: visible after login -->
+      <div id="topbar" style="position: fixed; top: 12px; right: 18px; z-index: 2000; display: none;">
+        <button id="logout-btn-top" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.85rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: var(--text-primary);">
+          <i data-lucide="log-out" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i>Keluar
+        </button>
+      </div>
+      <!-- ==========================================
+        SIDEBAR NAVIGATION
+        ========================================== -->
+      <aside class="sidebar">
+    <div class="brand-section">
+      <div class="brand-icon">S</div>
+      <div class="brand-name">SmartStock Pro</div>
+    </div>
+    
+    <nav style="flex: 1; display: flex; flex-direction: column;">
+      <ul class="nav-menu">
+        <li class="nav-item active" data-tab="dashboard-tab">
+          <a href="#"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+        </li>
+        <li class="nav-item" data-tab="products-tab">
+          <a href="#"><i data-lucide="package"></i> Galeri Produk</a>
+        </li>
+        <li class="nav-item" data-tab="categories-tab">
+          <a href="#"><i data-lucide="tag"></i> Kategori</a>
+        </li>
+        <li class="nav-item" data-tab="suppliers-tab">
+          <a href="#"><i data-lucide="truck"></i> Supplier</a>
+        </li>
+        <li class="nav-item" data-tab="warehouses-tab">
+          <a href="#"><i data-lucide="home"></i> Gudang</a>
+        </li>
+        <li class="nav-item" data-tab="transactions-tab">
+          <a href="#"><i data-lucide="arrow-left-right"></i> Transaksi Stok</a>
+        </li>
+        <li class="nav-item" data-tab="transfers-tab">
+          <a href="#"><i data-lucide="shuffle"></i> Transfer Gudang</a>
+        </li>
+        <li class="nav-item" data-tab="jobs-tab">
+          <a href="#"><i data-lucide="cpu"></i> Background Jobs</a>
+        </li>
+        <li class="nav-item admin-only" data-tab="logs-tab" style="display: none;">
+          <a href="#"><i data-lucide="shield-alert"></i> Audit & Error Logs</a>
+        </li>
+        <li class="nav-item admin-only" data-tab="users-tab" style="display: none;">
+          <a href="#"><i data-lucide="users"></i> Pengguna</a>
+        </li>
+      </ul>
+
+      <div class="user-profile">
+        <div class="user-info">
+          <span class="user-name" id="user-profile-name">Nama Pengguna</span>
+          <span class="user-role" id="user-profile-role">Admin</span>
+        </div>
+        <button id="logout-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.85rem; width: 100%;">
+          <i data-lucide="log-out" style="width: 14px; height: 14px;"></i> Keluar
+        </button>
+      </div>
+    </nav>
+      </aside>
+
+      <!-- ==========================================
+        3. MAIN LAYOUT WRAPPER
+        ========================================== -->
+      <main class="main-content">
+    
+    <!-- ==========================
+         TAB: DASHBOARD
+         ========================== -->
+    <div id="dashboard-tab" class="tab-content">
+      <header>
+        <div>
+          <h2 class="page-title">Ringkasan Real-Time</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Selamat datang kembali di SmartStock Pro Dashboard</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="exportDashboardPDF()">
+            <i data-lucide="file-text"></i> Export PDF Laporan
+          </button>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <section class="dashboard-grid" style="margin-top: 25px;">
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Total Produk</h3>
+            <span class="kpi-value" id="kpi-products">-</span>
+          </div>
+          <div class="kpi-icon"><i data-lucide="box"></i></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Total Gudang</h3>
+            <span class="kpi-value" id="kpi-warehouses">-</span>
+          </div>
+          <div class="kpi-icon"><i data-lucide="warehouse"></i></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Nilai Inventaris</h3>
+            <span class="kpi-value" id="kpi-valuation">-</span>
+          </div>
+          <div class="kpi-icon"><i data-lucide="coins"></i></div>
+        </div>
+        <div class="kpi-card" style="border-color: rgba(239, 68, 68, 0.2);">
+          <div class="kpi-info">
+            <h3>Stok Kritis</h3>
+            <span class="kpi-value" id="kpi-alerts" style="color: var(--danger);">-</span>
+          </div>
+          <div class="kpi-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);"><i data-lucide="alert-triangle"></i></div>
+        </div>
+      </section>
+
+      <!-- Charts & Leaflet Map Grid -->
+      <section class="charts-grid" style="margin-top: 25px;">
+        <!-- Left Column: Trend & Map -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Trend Chart -->
+          <div class="card">
+            <h4 class="card-title">Tren Arus Barang Masuk & Keluar</h4>
+            <div style="height: 250px; position: relative;">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+          <!-- Map Chart -->
+          <div class="card">
+            <h4 class="card-title">Peta Interaktif Lokasi Gudang (5 Kota)</h4>
+            <div id="warehouse-map"></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Monitoring, Alerts & Categories -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Resource Monitoring -->
+          <div class="card">
+            <h4 class="card-title">Uptime & Resource Monitor</h4>
+            <div class="monitoring-bar-container">
+              <div class="metric-bar-group">
+                <div class="metric-label-row">
+                  <span>Beban CPU Server</span>
+                  <span id="metric-cpu-val">0%</span>
+                </div>
+                <div class="metric-bar-outer">
+                  <div id="metric-cpu-bar" class="metric-bar-inner bg-cpu"></div>
+                </div>
+              </div>
+              <div class="metric-bar-group">
+                <div class="metric-label-row">
+                  <span>Penggunaan Memori RAM</span>
+                  <span id="metric-ram-val">0%</span>
+                </div>
+                <div class="metric-bar-outer">
+                  <div id="metric-ram-bar" class="metric-bar-inner bg-ram"></div>
+                </div>
+              </div>
+              <div class="metric-bar-group">
+                <div class="metric-label-row">
+                  <span>Waktu Respons Uptime</span>
+                  <span id="metric-rt-val">0ms</span>
+                </div>
+                <div class="metric-bar-outer">
+                  <div id="metric-rt-bar" class="metric-bar-inner bg-rt"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock Distribution Category -->
+          <div class="card">
+            <h4 class="card-title">Distribusi Kategori</h4>
+            <div style="height: 200px; position: relative; display: flex; justify-content: center;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Live Alert Notifications -->
+          <div class="card" style="flex: 1; min-height: 250px;">
+            <div class="card-title">
+              <span>Notifikasi & Alert Live</span>
+              <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="clearNotifications()">Hapus Semua</button>
+            </div>
+            <div class="notifications-panel" id="dashboard-notif-panel">
+              <div class="notif-item">
+                <span class="notif-body">Menghubungkan ke layanan live notification...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: PRODUCTS
+         ========================== -->
+    <div id="products-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Galeri Produk</h2>
+          <p style="color: var(--text-secondary);">Kelola katalog barang elektronik, multimedia, dan harga</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openProductModal()">
+            <i data-lucide="plus"></i> Tambah Produk
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="prod-search" class="form-control" placeholder="Cari kode atau nama produk..." oninput="loadProducts()">
+          </div>
+          <select id="prod-filter-category" class="filter-select" onchange="loadProducts()">
+            <option value="">Semua Kategori</option>
+          </select>
+          <select id="prod-filter-supplier" class="filter-select" onchange="loadProducts()">
+            <option value="">Semua Supplier</option>
+          </select>
+        </div>
+
+        <div class="product-gallery-grid" id="product-gallery">
+          <!-- Dynamically Rendered -->
+        </div>
+
+        <div class="pagination-row">
+          <span style="font-size: 0.9rem; color: var(--text-secondary);" id="prod-pagination-info">Menampilkan 0-0 dari 0</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="page-btn" id="prod-prev-btn" onclick="prevProdPage()">Sebelumnya</button>
+            <button class="page-btn" id="prod-next-btn" onclick="nextProdPage()">Selanjutnya</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: CATEGORIES
+         ========================== -->
+    <div id="categories-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Kategori Produk</h2>
+          <p style="color: var(--text-secondary);">Kelola pembagian kategori produk barang</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openCategoryModal()">
+            <i data-lucide="plus"></i> Tambah Kategori
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="cat-search" class="form-control" placeholder="Cari nama atau kode kategori..." oninput="loadCategories()">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama Kategori</th>
+                <th>Deskripsi</th>
+                <th class="edit-privilege" style="display: none; width: 150px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="category-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: SUPPLIERS
+         ========================== -->
+    <div id="suppliers-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Supplier Rekanan</h2>
+          <p style="color: var(--text-secondary);">Pencatatan data supplier logistik</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openSupplierModal()">
+            <i data-lucide="plus"></i> Tambah Supplier
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="sup-search" class="form-control" placeholder="Cari nama, kontak, atau kota..." oninput="loadSuppliers()">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama Supplier</th>
+                <th>Kontak</th>
+                <th>Kota</th>
+                <th>No Telepon</th>
+                <th class="edit-privilege" style="display: none; width: 150px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="supplier-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: WAREHOUSES
+         ========================== -->
+    <div id="warehouses-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Daftar Gudang Kantor</h2>
+          <p style="color: var(--text-secondary);">Monitoring utilitas kapasitas 5 gudang besar di Indonesia</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openWarehouseModal()">
+            <i data-lucide="plus"></i> Tambah Gudang
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="wh-search" class="form-control" placeholder="Cari nama, kota, manager..." oninput="loadWarehouses()">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama Gudang</th>
+                <th>Kota</th>
+                <th>Manager</th>
+                <th>Kapasitas Digunakan</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="warehouse-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: TRANSACTIONS
+         ========================== -->
+    <div id="transactions-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Transaksi Keluar Masuk Barang</h2>
+          <p style="color: var(--text-secondary);">Mutasi logistik barang inventaris secara mendetail</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openTransactionModal()">
+            <i data-lucide="plus"></i> Input Transaksi Baru
+          </button>
+        </div>
+      </header>
+
+      <!-- FIFO / LIFO Side Engine -->
+      <section class="card" style="margin-top: 25px; border-left: 4px solid var(--color-accent);">
+        <h4 class="card-title">Algoritma Perhitungan Stok Otomatis (FIFO vs LIFO Valuation Engine)</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+          Pilih salah satu produk di bawah untuk memproses kalkulasi Cost of Goods Sold (COGS) dan Nilai Stok Akhir secara FIFO (First-In, First-Out) dan LIFO (Last-In, First-Out) berdasarkan histori pembelian.
+        </p>
+        <div class="filter-row">
+          <select id="valuation-product-select" class="filter-select" style="min-width: 250px;" onchange="calculateValuation()">
+            <option value="">-- Pilih Produk untuk Evaluasi --</option>
+          </select>
+        </div>
+
+        <div id="valuation-result-box" style="display: none; margin-top: 20px;">
+          <div class="valuation-comparison-grid">
+            <!-- FIFO -->
+            <div class="valuation-box" style="border-top: 3px solid var(--success);">
+              <span class="badge badge-success">Metode FIFO</span>
+              <div class="valuation-metric" id="fifo-ending-val">Rp 0</div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Nilai Stok Akhir (Ending Inventory)</p>
+              <div style="margin-top: 10px; font-size: 0.9rem;">
+                COGS Terjual: <span class="valuation-cogs" id="fifo-cogs">Rp 0</span>
+              </div>
+              <div style="margin-top: 5px; font-size: 0.9rem;">
+                Kuantitas Sisa: <span id="fifo-ending-qty">0 unit</span>
+              </div>
+            </div>
+            <!-- LIFO -->
+            <div class="valuation-box" style="border-top: 3px solid var(--warning);">
+              <span class="badge badge-warning">Metode LIFO</span>
+              <div class="valuation-metric" id="lifo-ending-val">Rp 0</div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Nilai Stok Akhir (Ending Inventory)</p>
+              <div style="margin-top: 10px; font-size: 0.9rem;">
+                COGS Terjual: <span class="valuation-cogs" id="lifo-cogs">Rp 0</span>
+              </div>
+              <div style="margin-top: 5px; font-size: 0.9rem;">
+                Kuantitas Sisa: <span id="lifo-ending-qty">0 unit</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="tx-search" class="form-control" placeholder="Cari kode transaksi, catatan, ref..." oninput="loadTransactions()">
+          </div>
+          <select id="tx-filter-type" class="filter-select" onchange="loadTransactions()">
+            <option value="">Semua Tipe</option>
+            <option value="in">Barang Masuk (IN)</option>
+            <option value="out">Barang Keluar (OUT)</option>
+          </select>
+          <select id="tx-filter-warehouse" class="filter-select" onchange="loadTransactions()">
+            <option value="">Semua Gudang</option>
+          </select>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Tanggal</th>
+                <th>Tipe</th>
+                <th>Produk</th>
+                <th>Gudang</th>
+                <th>Jumlah</th>
+                <th>Harga Satuan</th>
+                <th>Total Nilai</th>
+                <th>Ref No</th>
+              </tr>
+            </thead>
+            <tbody id="transaction-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-row">
+          <span style="font-size: 0.9rem; color: var(--text-secondary);" id="tx-pagination-info">Menampilkan 0-0 dari 0</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="page-btn" id="tx-prev-btn" onclick="prevTxPage()">Sebelumnya</button>
+            <button class="page-btn" id="tx-next-btn" onclick="nextTxPage()">Selanjutnya</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: TRANSFERS
+         ========================== -->
+    <div id="transfers-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Transfer Antar Gudang</h2>
+          <p style="color: var(--text-secondary);">Proses mutasi stok internal antar cabang kota besar</p>
+        </div>
+        <div class="page-actions edit-privilege" style="display: none;">
+          <button class="btn btn-primary" onclick="openTransferModal()">
+            <i data-lucide="shuffle"></i> Minta Transfer
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Produk</th>
+                <th>Asal</th>
+                <th>Tujuan</th>
+                <th>Jumlah</th>
+                <th>Status</th>
+                <th>Peminta</th>
+                <th>Persetujuan</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="transfer-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: BACKGROUND JOBS & CSV IMPORT
+         ========================== -->
+    <div id="jobs-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Pekerjaan Latar Belakang & Batch Import</h2>
+          <p style="color: var(--text-secondary);">Pemrosesan paralel untuk impor CSV dan generate laporan besar</p>
+        </div>
+      </header>
+
+      <div class="charts-grid" style="margin-top: 25px;">
+        <!-- Left: Upload/Trigger Panel -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Batch Import CSV -->
+          <div class="card" style="border-top: 4px solid var(--color-primary);">
+            <h4 class="card-title">Batch Import Data Produk (CSV Parallel)</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">
+              Unggah berkas CSV untuk mengimpor atau memperbarui banyak produk secara bersamaan. Program akan membagi data menjadi beberapa bagian dan memasukkannya secara paralel.
+            </p>
+            <form id="csv-import-form">
+              <div class="form-group">
+                <label class="form-label">Berkas CSV</label>
+                <input type="file" id="csv-file-input" class="form-control" accept=".csv" required>
+              </div>
+              <button type="submit" class="btn btn-primary edit-privilege" style="display: none;">
+                <i data-lucide="upload"></i> Mulai Impor CSV
+              </button>
+              <div class="viewer-message" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">
+                *Hanya Admin/Manager yang diizinkan untuk mengimpor CSV.
+              </div>
+            </form>
+            <div id="csv-import-result" style="margin-top: 20px; display: none;" class="valuation-box">
+              <!-- Result stats -->
+            </div>
+          </div>
+
+          <!-- Report Generator -->
+          <div class="card" style="border-top: 4px solid var(--color-secondary);">
+            <h4 class="card-title">Generate Laporan Inventaris Besar (Background Job)</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">
+              Memulai background task pada queue server untuk mengompilasi seluruh data produk dan menghitung total nilai aset. Layanan UI akan tetap aktif saat proses berjalan di latar belakang.
+            </p>
+            <div style="display: flex; gap: 12px;">
+              <button class="btn btn-primary" onclick="enqueueReportJob()">
+                <i data-lucide="play"></i> Antrekan Laporan Baru
+              </button>
+              <button class="btn btn-secondary edit-privilege" style="display: none;" onclick="enqueueSyncJob()">
+                <i data-lucide="refresh-cw"></i> Sinkronisasi Antar Gudang
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Queue Status -->
+        <div class="card">
+          <h4 class="card-title">Antrean Pekerjaan Latar Belakang (Job Queue)</h4>
+          <div class="notifications-panel" id="job-queue-panel" style="max-height: 500px;">
+            <!-- Rendered list of jobs -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================
+         TAB: AUDIT LOGS
+         ========================== -->
+    <div id="logs-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Audit Log & System Errors</h2>
+          <p style="color: var(--text-secondary);">Log audit keamanan dan pelacakan kesalahan aplikasi</p>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="filter-row">
+          <div class="search-input-group">
+            <input type="text" id="log-search" class="form-control" placeholder="Cari tipe aksi..." oninput="loadLogs()">
+          </div>
+          <select id="log-filter-severity" class="filter-select" onchange="loadLogs()">
+            <option value="">Semua Tingkat Keparahan</option>
+            <option value="info">Info</option>
+            <option value="warning">Warning</option>
+            <option value="critical">Critical (Error)</option>
+          </select>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Pengguna</th>
+                <th>Aksi</th>
+                <th>Modul</th>
+                <th>Keparahan</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody id="log-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-row">
+          <span style="font-size: 0.9rem; color: var(--text-secondary);" id="log-pagination-info">Menampilkan 0-0 dari 0</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="page-btn" id="log-prev-btn" onclick="prevLogPage()">Sebelumnya</button>
+            <button class="page-btn" id="log-next-btn" onclick="nextLogPage()">Selanjutnya</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==========================
+         TAB: USERS
+         ========================== -->
+    <div id="users-tab" class="tab-content" style="display: none;">
+      <header>
+        <div>
+          <h2 class="page-title">Manajemen Akun Pengguna</h2>
+          <p style="color: var(--text-secondary);">Pemberian hak akses multi-level dan penempatan gudang</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openUserModal()">
+            <i data-lucide="plus"></i> Tambah Pengguna Baru
+          </button>
+        </div>
+      </header>
+
+      <section class="card" style="margin-top: 25px;">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Nama Lengkap</th>
+                <th>Email</th>
+                <th>Peran</th>
+                <th>Penugasan Gudang</th>
+                <th>Login Terakhir</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- Rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    </main>
+  </div>
+
+  <!-- ==========================================
+       4. MODAL DIALOG CONTAINERS
+       ========================================== -->
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="product-modal-title">Tambah Produk</h3>
+        <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
+      </div>
+      <form id="product-form" enctype="multipart/form-data">
+        <input type="hidden" id="prod-form-id">
+        <div class="modal-body">
+          <div class="form-group" id="prod-code-group">
+            <label class="form-label" for="prod-form-code">Kode Produk</label>
+            <input type="text" id="prod-form-code" class="form-control" placeholder="Contoh: PRD-016" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-form-name">Nama Produk</label>
+            <input type="text" id="prod-form-name" class="form-control" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="prod-form-category">Kategori</label>
+              <select id="prod-form-category" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-form-supplier">Supplier</label>
+              <select id="prod-form-supplier" class="form-control" required></select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label" for="prod-form-unit">Satuan Unit</label>
+              <input type="text" id="prod-form-unit" class="form-control" value="unit" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-form-price">Harga (Rupiah)</label>
+              <input type="number" id="prod-form-price" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-form-minstock">Stok Minimum</label>
+              <input type="number" id="prod-form-minstock" class="form-control" value="10" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-form-desc">Deskripsi</label>
+            <textarea id="prod-form-desc" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Foto Produk (Multimedia Gallery)</label>
+            <div class="image-preview-container" id="prod-image-preview-box">
+              <span style="color: var(--text-muted)">Belum ada foto</span>
+            </div>
+            <input type="file" id="prod-form-image" class="form-control" accept="image/*" onchange="previewProductImage(this)">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('product-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Produk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warehouse Detail Modal (Showing stocks breakdown) -->
+  <div class="modal-overlay" id="warehouse-detail-modal">
+    <div class="modal-container" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="wh-detail-title">Detail Stok Gudang</h3>
+        <button class="modal-close" onclick="closeModal('warehouse-detail-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary);" id="wh-detail-meta">
+          <!-- WH Meta details -->
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Kode</th>
+                <th>Nama Produk</th>
+                <th>Kategori</th>
+                <th>Stok Tersedia</th>
+                <th>Nilai Asset</th>
+              </tr>
+            </thead>
+            <tbody id="wh-detail-table-body">
+              <!-- Rendered items -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="category-modal-title">Tambah Kategori</h3>
+        <button class="modal-close" onclick="closeModal('category-modal')">&times;</button>
+      </div>
+      <form id="category-form">
+        <input type="hidden" id="cat-form-id">
+        <div class="modal-body">
+          <div class="form-group" id="cat-code-group">
+            <label class="form-label" for="cat-form-code">Kode Kategori</label>
+            <input type="text" id="cat-form-code" class="form-control" placeholder="Contoh: CAT-008" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cat-form-name">Nama Kategori</label>
+            <input type="text" id="cat-form-name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cat-form-desc">Deskripsi</label>
+            <textarea id="cat-form-desc" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('category-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Kategori</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supplier Modal -->
+  <div class="modal-overlay" id="supplier-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="supplier-modal-title">Tambah Supplier</h3>
+        <button class="modal-close" onclick="closeModal('supplier-modal')">&times;</button>
+      </div>
+      <form id="supplier-form">
+        <input type="hidden" id="sup-form-id">
+        <div class="modal-body">
+          <div class="form-group" id="sup-code-group">
+            <label class="form-label" for="sup-form-code">Kode Supplier</label>
+            <input type="text" id="sup-form-code" class="form-control" placeholder="Contoh: SUP-007" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sup-form-name">Nama Supplier</label>
+            <input type="text" id="sup-form-name" class="form-control" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="sup-form-cp">Contact Person</label>
+              <input type="text" id="sup-form-cp" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sup-form-phone">No Telepon</label>
+              <input type="text" id="sup-form-phone" class="form-control">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="sup-form-city">Kota</label>
+              <input type="text" id="sup-form-city" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sup-form-email">Email</label>
+              <input type="email" id="sup-form-email" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sup-form-address">Alamat Lengkap</label>
+            <textarea id="sup-form-address" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('supplier-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warehouse Modal -->
+  <div class="modal-overlay" id="warehouse-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="warehouse-modal-title">Tambah Gudang</h3>
+        <button class="modal-close" onclick="closeModal('warehouse-modal')">&times;</button>
+      </div>
+      <form id="warehouse-form">
+        <input type="hidden" id="wh-form-id">
+        <div class="modal-body">
+          <div class="form-group" id="wh-code-group">
+            <label class="form-label" for="wh-form-code">Kode Gudang</label>
+            <input type="text" id="wh-form-code" class="form-control" placeholder="Contoh: WH-MLG" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wh-form-name">Nama Gudang</label>
+            <input type="text" id="wh-form-name" class="form-control" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="wh-form-city">Kota</label>
+              <input type="text" id="wh-form-city" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="wh-form-capacity">Kapasitas Maksimum (Stok)</label>
+              <input type="number" id="wh-form-capacity" class="form-control" value="1000" required>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="wh-form-lat">Latitude</label>
+              <input type="number" step="any" id="wh-form-lat" class="form-control" placeholder="Contoh: -6.2088">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="wh-form-lng">Longitude</label>
+              <input type="number" step="any" id="wh-form-lng" class="form-control" placeholder="Contoh: 106.8456">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="wh-form-mgr">Manager Penanggung Jawab</label>
+              <input type="text" id="wh-form-mgr" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="wh-form-phone">No Telepon</label>
+              <input type="text" id="wh-form-phone" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wh-form-address">Alamat</label>
+            <textarea id="wh-form-address" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('warehouse-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Gudang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transaction Modal -->
+  <div class="modal-overlay" id="transaction-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Input Transaksi Barang</h3>
+        <button class="modal-close" onclick="closeModal('transaction-modal')">&times;</button>
+      </div>
+      <form id="transaction-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="tx-form-type">Tipe Transaksi</label>
+            <select id="tx-form-type" class="form-control" required>
+              <option value="in">Barang Masuk (IN)</option>
+              <option value="out">Barang Keluar (OUT)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="tx-form-product">Produk</label>
+            <select id="tx-form-product" class="form-control" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="tx-form-warehouse">Gudang Penyimpanan</label>
+            <select id="tx-form-warehouse" class="form-control" required></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="tx-form-qty">Kuantitas</label>
+              <input type="number" id="tx-form-qty" class="form-control" min="1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tx-form-price">Harga per Unit (Beli/Jual)</label>
+              <input type="number" id="tx-form-price" class="form-control" min="0" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="tx-form-ref">Nomor Referensi (Invoice/DO)</label>
+            <input type="text" id="tx-form-ref" class="form-control" placeholder="Contoh: INV-2026-001">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="tx-form-note">Catatan Tambahan</label>
+            <textarea id="tx-form-note" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('transaction-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Catat Transaksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warehouse Transfer Modal -->
+  <div class="modal-overlay" id="transfer-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Buat Permintaan Transfer Gudang</h3>
+        <button class="modal-close" onclick="closeModal('transfer-modal')">&times;</button>
+      </div>
+      <form id="transfer-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="trf-form-product">Produk</label>
+            <select id="trf-form-product" class="form-control" required></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="trf-form-from">Gudang Asal (Source)</label>
+              <select id="trf-form-from" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="trf-form-to">Gudang Tujuan (Destination)</label>
+              <select id="trf-form-to" class="form-control" required></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="trf-form-qty">Jumlah Transfer</label>
+            <input type="number" id="trf-form-qty" class="form-control" min="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="trf-form-note">Catatan Keperluan</label>
+            <textarea id="trf-form-note" class="form-control" rows="3" placeholder="Contoh: Mengatasi overload stok di WH Jakarta"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('transfer-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Kirim Permintaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Account Modal -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="user-modal-title">Tambah Pengguna Baru</h3>
+        <button class="modal-close" onclick="closeModal('user-modal')">&times;</button>
+      </div>
+      <form id="user-form">
+        <input type="hidden" id="user-form-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="user-form-username">Username</label>
+            <input type="text" id="user-form-username" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="user-form-fullname">Nama Lengkap</label>
+            <input type="text" id="user-form-fullname" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="user-form-email">Email</label>
+            <input type="email" id="user-form-email" class="form-control" required>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label class="form-label" for="user-form-role">Role Akses</label>
+              <select id="user-form-role" class="form-control" required onchange="toggleUserFormWarehouse()">
+                <option value="admin">Admin</option>
+                <option value="manager">Manajer Gudang</option>
+                <option value="staff">Staf Gudang</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+            <div class="form-group" id="user-form-wh-group" style="display: none;">
+              <label class="form-label" for="user-form-warehouse">Penugasan Gudang</label>
+              <select id="user-form-warehouse" class="form-control"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="user-form-password">Password (Minimum 8 Karakter)</label>
+            <input type="password" id="user-form-password" class="form-control" oninput="checkPasswordStrength(this.value)">
+            <small style="color: var(--text-muted);" id="pw-required-text">*Masukkan password baru jika ingin mengubah</small>
+            <div class="strength-meter" id="password-strength-meter">
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+              <div class="strength-bar"></div>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;" id="password-strength-text">Password harus kuat</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('user-modal')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       5. SCRIPTS LOAD (Leaflet, Chart.js, App code)
+       ========================================== -->
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icon Renderer CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Main application script -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
