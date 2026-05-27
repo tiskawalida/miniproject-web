@@ -105,6 +105,15 @@ SmartStock Pro dapat diakses berdasarkan level peran pengguna (Admin, Manajer Gu
 
 ## 5. Screenshot Web
 <img width="1909" height="945" alt="image" src="https://github.com/user-attachments/assets/7a6ef852-c29a-4c61-95d7-e21983e8b3a7" /> -Halaman Login
+<img width="1874" height="879" alt="image" src="https://github.com/user-attachments/assets/c6251113-36a9-47b0-b9b8-e1ff2eb4fa57" /> -Dashboard
+<img width="1873" height="866" alt="image" src="https://github.com/user-attachments/assets/f4f0bae2-ec63-4cc8-8b23-b2bc4f87c2d5" /> -Galeri Produk
+<img width="1866" height="866" alt="image" src="https://github.com/user-attachments/assets/3dcd15af-db94-4596-880b-7773060038b2" /> -Kategori Produk
+<img width="1869" height="869" alt="image" src="https://github.com/user-attachments/assets/1c8181e5-40c9-43c0-b4ed-82e13893b598" /> -Gudang
+<img width="1888" height="877" alt="image" src="https://github.com/user-attachments/assets/5882cfba-d9b9-45c6-b8a6-ae38218f015b" /> -Transaksi Stok
+
+
+
+
 
 
 
