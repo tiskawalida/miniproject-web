@@ -101,3 +101,11 @@ SmartStock Pro dapat diakses berdasarkan level peran pengguna (Admin, Manajer Gu
   * *Solusi:* Periksa kembali header kolom file CSV Anda. Pastikan pemisah kolom menggunakan tanda koma (`,`) dan tidak ada spasi di header kolom seperti `code,name,category_code,supplier_code,unit,price,min_stock`.
 * **Masalah 4: Nilai CPU dan RAM server terus menunjukkan angka 0%.**
   * *Solusi:* Server web membutuhkan beberapa detik untuk melakukan sampel beban kerja CPU pertama kali. Jika terus berlanjut, pastikan proses Node.js memiliki hak akses membaca metrik sistem OS server.
+---
+
+## 5. Screenshot Web
+<img width="1909" height="945" alt="image" src="https://github.com/user-attachments/assets/7a6ef852-c29a-4c61-95d7-e21983e8b3a7" /> -Halaman Login
+
+
+
+
