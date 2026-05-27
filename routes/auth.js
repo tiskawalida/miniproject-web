@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const { getDb } = require('../database/db');
 const { auditLog } = require('../middleware/logger');
-const { generateCsrfToken, requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 // Password strength validator
 function isStrongPassword(password) {
@@ -23,19 +23,15 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    console.log('DEBUG: /api/auth/login called', { ip: req.ip, username });
     const db = getDb();
     const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username.trim());
-    console.log('DEBUG: user lookup result', !!user);
 
     if (!user) {
       auditLog(null, username, 'LOGIN_FAILED', 'users', `Login gagal: user tidak ditemukan`, 'warning');
       return res.status(401).json({ success: false, message: 'Username atau password salah.' });
     }
 
-    console.log('DEBUG: comparing password for user id', user.id);
     const match = await bcrypt.compare(password, user.password);
-    console.log('DEBUG: bcrypt.compare result', match);
     if (!match) {
       auditLog(user.id, username, 'LOGIN_FAILED', 'users', `Login gagal: password salah`, 'warning');
       return res.status(401).json({ success: false, message: 'Username atau password salah.' });

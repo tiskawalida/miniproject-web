@@ -87,6 +87,7 @@ app.use('/api/warehouses', require('./routes/warehouses'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/transfers', require('./routes/transfers'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/monitoring', require('./routes/monitoring'));
 app.use('/api/jobs', require('./routes/jobs'));
 
